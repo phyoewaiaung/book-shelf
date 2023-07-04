@@ -4,6 +4,7 @@ const cookieParser = require('cookie-parser');
 const mongoose = require('mongoose');
 const app = express();
 const config = require('./config/config').get(process.env.NODE_ENV);
+const {auth} = require('./middleware/auth');
 
 // mongoose.Promise = global.Promise;
 mongoose.connect(config.DATABASE);
@@ -37,6 +38,27 @@ app.get('/api/get-reviewer',(req,res)=> {
 
 app.get('/api/users',(req,res)=> {
     User.find().then(users => res.status(200).send(users)).catch(e => res.status(400).send(e))
+})
+
+app.get('/api/user_posts',(req,res)=> {
+    Book.find({ownerId:req.query.user}).exec().then(doc=>res.send(doc)).catch(e => res.status(400).send(e))
+})
+
+app.get('/api/logout',auth,(req,res)=> {
+    req.user.deleteToken(req.token,function(err,dco){
+        if(err) return res.status(400).send(err);
+        res.sendStatus(200);
+    })
+})
+
+app.get('/api/auth',auth,(req,res)=> {
+    res.json({
+        isAuth:true,
+        id:req.user._id,
+        email:req.user.email,
+        name:req.user.name,
+        lastname:req.user.lastname
+    })
 })
 
 // POST //
